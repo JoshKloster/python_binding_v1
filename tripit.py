@@ -322,10 +322,11 @@ class TripIt(object):
     # is NOT optional. In a future release, the default value, and the
     # webauth_credentials and oauth_credentials keyword parameters will be removed.
     def __init__(self, credential = None, api_url='https://api.tripit.com',
-                 webauth_credentials = None, oauth_credentials = None):
+                 webauth_credentials = None, oauth_credentials = None, content_type = 'text/xml'):
         self._api_url     = api_url
         self._api_version = 'v1'
         self._credential  = credential or oauth_credentials or webauth_credentials
+        self._content_type = content_type
 
         self.resource  = None
         self.response  = None
@@ -351,6 +352,9 @@ class TripIt(object):
             url = base_url + '?' + urllib.urlencode(url_args)
         else:
             url = base_url
+
+        if self._content_type == 'application/json' or self._content_type == 'json':
+            url = url + '/format/json'
 
         self.resource = url
 
@@ -385,9 +389,14 @@ class TripIt(object):
             except ValueError:
                 verb = command
                 entity = None
-
+        
         response_data = self._do_request(verb, entity, params, post_args)
-        return _xml_to_py(response_data)
+        parsed_respose = None
+        if self._content_type == 'application/json' or self._content_type == 'json':
+            parsed_response = _json_to_py(response_data)
+        else:
+            parsed_response = _xml_to_py(response_data)
+        return parsed_response
 
     def get_trip(self, id, filter=None):
         if filter is None:
@@ -552,6 +561,9 @@ def _parse_qs(qs):
         request_params[request_param] = request_param_value
 
     return request_params
+
+def _json_to_py(data):
+    return json.loads(data)
 
 def _xml_to_py(data):
     parser = xml.sax.make_parser()
