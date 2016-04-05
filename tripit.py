@@ -349,7 +349,7 @@ class TripIt(object):
         args = None
         if url_args is not None:
             args = url_args
-            url = base_url + '?' + urllib.urlencode(url_args)
+            url = base_url + '/' + urllib.urlencode(url_args).replace('=', '/')
         else:
             url = base_url
 
